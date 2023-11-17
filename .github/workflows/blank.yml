@@ -25,6 +25,8 @@ jobs:
         run: wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -o ./${{ matrix.name }}
       - name: 提交geoIP文件${{ matrix.name }}
         run: |
+          git config --global user.email "preferhu@qq.com"
+          git config --global user.name "cnartlu"
           git add ./${{ matrix.name }}
           git commit -m "提交更新文件${{ matrix.name }}"
           git push
