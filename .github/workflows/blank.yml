@@ -3,9 +3,7 @@
 
 name: download geoip2 files
 
-on:
-  schedule:
-    - cron: "0 2 * * *"
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,7 +24,7 @@ jobs:
       - name: install wget
         run: apt install wget -y
       - name: download ipinfo geoip
-        run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=7617e71ea49806" -o ${{ matrix.name }}
+        run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.ipinfo_token }}" -o ${{ matrix.name }}
       - name: publish
         uses: actions/upload-release-asset@v1
         env:
