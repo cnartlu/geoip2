@@ -21,8 +21,6 @@ jobs:
           - name: country_asn.csv.gz
     steps:
       - uses: actions/checkout@master
-      - name: install wget
-        run: apt install wget -y
       - name: download ipinfo geoip
         run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }}" -o ${{ matrix.name }}
       - name: publish
