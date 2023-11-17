@@ -5,32 +5,30 @@ name: download geoip2 files
 
 on: workflow_dispatch
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  release:
     strategy:
       matrix:
         include:
           - name: asn.mmdb
-          - name: asn.json.gz
-          - name: asn.csv.gz
-          - name: country.mmdb
-          - name: country.json.gz
-          - name: country.csv.gz
-          - name: country_asn.mmdb
-          - name: country_asn.json.gz
-          - name: country_asn.csv.gz
+    runs-on: ubuntu-latest
     steps:
+      - name: 获取系统日期
+        id: datetime
+        run: echo "time=$(date +%Y%m%d%H%M%S)" > $GITHUB_OUTPUT
       - uses: actions/checkout@master
-      - name: download ipinfo geoip
-        run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }}" -o ${{ matrix.name }}
+      - uses: JasonEtco/build-and-tag-action@v2
+        with:
+          tag_name: ${{ steps.datetime.outputs.time }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.datetime.outputs.time }}
+          release_name: Release ${{ steps.datetime.outputs.time }}
           draft: false
           prerelease: false
       - name: publish
@@ -38,6 +36,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }}
           asset_path: ./${{ matrix.name }}
           asset_name: ${{ matrix.name }}
