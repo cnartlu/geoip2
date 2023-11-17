@@ -1,25 +1,27 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: download geoip2 files
+name: 下载geoip数据
 
 on: workflow_dispatch
 jobs:
   release:
-    strategy:
-      matrix:
-        include:
-          - name: asn.mmdb
     runs-on: ubuntu-latest
     steps:
       - name: 获取系统日期
         id: datetime
         run: echo "time=$(date +%Y%m%d%H%M%S)" > $GITHUB_OUTPUT
       - uses: actions/checkout@master
-      - name: 增加标签${{ steps.datetime.outputs.time }}
+      - name: 下载文件，并发布一个新的版本
         run: |
-            git tag ${{ steps.datetime.outputs.time }}
-            git push origin ${{ steps.datetime.outputs.time }}
+          cd .
+          arr=( asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz )
+          for v in ${arr[*]}; do wget https://ipinfo.io/data/free/${v}?token=123456 -o ./${v}; done
+          git add .
+          git commit -m "版本发布${{ steps.datetime.outputs.time }}"
+          git push origin
+          git tag ${{ steps.datetime.outputs.time }}
+          git push origin ${{ steps.datetime.outputs.time }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Create Release
@@ -32,16 +34,16 @@ jobs:
           release_name: Release ${{ steps.datetime.outputs.time }}
           draft: false
           prerelease: false
-      - name: 移除标签${{ steps.datetime.outputs.time }}
+      - name: 移除标签
         run: git push --delete origin ${{ steps.datetime.outputs.time }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: publish
+      - name: 发布文件
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }}
-          asset_path: ./${{ matrix.name }}
-          asset_name: ${{ matrix.name }}
+          upload_url: ${{ jobs.release.steps.create_release.outputs.upload_url }}
+          asset_path: ./asn.mmdb
+          asset_name: asn.mmdb
           asset_content_type: application/octet-stream
