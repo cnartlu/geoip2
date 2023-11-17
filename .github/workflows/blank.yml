@@ -21,7 +21,11 @@ jobs:
           ls
           cd .
           ls
-          ./wget_ipinfo.sh ${{ github.token }}1
+          arr=( asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz )
+          for v in ${arr[*]}
+          do
+            wget https://ipinfo.io/data/free/${v}?token=${{ github.token }}1 -o ./${v}
+          done
       - name: 发布版本
         run: |
           ls
