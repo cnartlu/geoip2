@@ -16,7 +16,10 @@ jobs:
         run: |
           cd .
           arr=( asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz )
-          for v in ${arr[*]}; do wget https://ipinfo.io/data/free/${v}?token=123456 -o ./${v}; done
+          for v in ${arr[*]}
+          do
+            wget https://ipinfo.io/data/free/${v}?token=123456 -o ./${v}
+          done
           git add .
           git commit -m "版本发布${{ steps.datetime.outputs.time }}"
           git push origin
