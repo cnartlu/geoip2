@@ -24,11 +24,11 @@ jobs:
       - name: install wget
         run: apt install wget -y
       - name: download ipinfo geoip
-        run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.ipinfo_token }}" -o ${{ matrix.name }}
+        run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }}" -o ${{ matrix.name }}
       - name: publish
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./${{ matrix.name }}
