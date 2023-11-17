@@ -8,8 +8,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     defaults:
-    run:
-      working-directory: ./
+      run:
+        working-directory: ./
     steps:
       - name: 获取系统日期
         id: datetime
