@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: 下载文件
-        run: wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ matrix.name }} -o ./${{ matrix.name }}
+        run: wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -o ./${{ matrix.name }}
       - name: 提交geoIP文件${{ matrix.name }}
         run: |
           git add ./${{ matrix.name }}
