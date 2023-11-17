@@ -24,10 +24,11 @@ jobs:
       - name: download ipinfo geoip
         run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }}" -o ${{ matrix.name }}
       - name: publish
+        id: create_release
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./${{ matrix.name }}
           asset_name: ${{ matrix.name }}
