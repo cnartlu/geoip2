@@ -1,0 +1,37 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: download geoip2 files
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: asn.mmdb
+          - name: asn.json.gz
+          - name: asn.csv.gz
+          - name: country.mmdb
+          - name: country.json.gz
+          - name: country.csv.gz
+          - name: country_asn.mmdb
+          - name: country_asn.json.gz
+          - name: country_asn.csv.gz
+    steps:
+      - uses: actions/checkout@master
+      - name: install wget
+        run: apt install wget -y
+      - name: download ipinfo geoip
+        run: wget "https://ipinfo.io/data/free/${{ matrix.name }}?token=7617e71ea49806" -o ${{ matrix.name }}
+      - name: publish
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ matrix.name }}
+          asset_name: ${{ matrix.name }}
