@@ -12,14 +12,16 @@ jobs:
         id: datetime
         run: echo "time=$(date +%Y%m%d%H%M%S)" > $GITHUB_OUTPUT
       - uses: actions/checkout@master
-      - name: 下载文件，并发布一个新的版本
+        id: git_checkout
+      - name: 下载资源文件
         run: |
+          ls
           cd .
-          arr=( asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz )
-          for v in ${arr[*]}
-          do
-            wget https://ipinfo.io/data/free/${v}?token=123456 -o ./${v}
-          done
+          ls
+          ./wget_ipinfo.sh ${{ github.token }}1
+      - name: 发布版本
+        run: |
+          ls
           git add .
           git commit -m "版本发布${{ steps.datetime.outputs.time }}"
           git push origin
@@ -37,7 +39,7 @@ jobs:
           release_name: Release ${{ steps.datetime.outputs.time }}
           draft: false
           prerelease: false
-      - name: 移除标签
+      - name: 移除版本
         run: git push --delete origin ${{ steps.datetime.outputs.time }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
