@@ -21,7 +21,6 @@ jobs:
           ls
           cd .
           ls
-          chmod +x ./wget_ipinfo.sh
           ./wget_ipinfo.sh 122323
       - name: 发布版本
         run: |
