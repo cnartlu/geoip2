@@ -7,6 +7,9 @@ on: workflow_dispatch
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.datetime.outputs.time }}
     steps:
       - uses: actions/checkout@master
       - name: 获取系统日期
@@ -35,13 +38,9 @@ jobs:
         run: git push --delete origin ${{ steps.datetime.outputs.time }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: 输出变量
-        run: |
-          echo ${{ steps.create_release.outputs.upload_url }}
-          echo ${{ needs.release.steps.create_release.outputs.upload_url }}
 
   upload:
-    needs: [ release]
+    needs: [release]
     strategy:
       matrix:
         include:
@@ -59,13 +58,13 @@ jobs:
       - uses: actions/checkout@master
       - name: 输出变量
         run: |
-          echo ${{ needs.release.steps.create_release.outputs.upload_url }}
+          echo ${{ needs.release.outputs.upload_url }}
       - name: 发布文件
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ needs.release.steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./${{ matrix.name }}
           asset_name: ${{ matrix.name }}
           asset_content_type: application/octet-stream
