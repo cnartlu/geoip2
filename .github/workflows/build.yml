@@ -20,9 +20,9 @@ jobs:
         run: |
           git config --global user.email "preferhu@qq.com"
           git config --global user.name "cnartlu"
-          git add .
-          git commit -m "提交更新文件${{ matrix.name }}"
-          git push
+          git add . || true
+          git commit -m "提交更新文件${{ matrix.name }}" || true
+          git push || true
         env:
           GITHUB_TOKEN: ${{ github.token }}
   release:
