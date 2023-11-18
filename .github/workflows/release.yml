@@ -57,6 +57,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: 输出变量
+        run: |
+          echo ${{ needs.release.steps.create_release.outputs.upload_url }}
       - name: 发布文件
         uses: actions/upload-release-asset@v1
         env:
