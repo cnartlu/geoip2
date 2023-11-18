@@ -12,7 +12,7 @@ jobs:
       - name: 下载文件
         run: |
           arr=( asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz )
-          for v in ${arr[*]}; do wget https://ipinfo.io/data/free/${v}?token=${{ secrets.IPINFO_TOKEN }} -o ./${v}; done
+          for v in ${arr[*]}; do wget https://ipinfo.io/data/free/${v}?token=${{ secrets.IPINFO_TOKEN }} -O ./${v}; done
       - name: 提交geoIP文件${{ matrix.name }}
         run: |
           git config --global user.email "preferhu@qq.com"
@@ -53,6 +53,10 @@ jobs:
         run: git push --delete origin ${{ steps.datetime.outputs.time }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
+      - name: 输出变量
+        run: |
+          echo ${{ steps.create_release.outputs.upload_url }}
+          echo ${{ needs.release.steps.create_release.outputs.upload_url }}
 
   upload:
     needs: [build, release]
