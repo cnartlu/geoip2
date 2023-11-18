@@ -1,0 +1,68 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: 发版打包
+
+on: workflow_dispatch
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: 获取系统日期
+        id: datetime
+        run: echo "time=$(date +%Y%m%d%H%M%S)" > $GITHUB_OUTPUT
+      - uses: actions/checkout@master
+        id: git_checkout          
+      - name: 发布版本
+        run: |
+          ls -la
+          git tag ${{ steps.datetime.outputs.time }}
+          git push origin ${{ steps.datetime.outputs.time }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.datetime.outputs.time }}
+          release_name: Release ${{ steps.datetime.outputs.time }}
+          draft: false
+          prerelease: false
+      - name: 移除版本
+        run: git push --delete origin ${{ steps.datetime.outputs.time }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: 输出变量
+        run: |
+          echo ${{ steps.create_release.outputs.upload_url }}
+          echo ${{ needs.release.steps.create_release.outputs.upload_url }}
+
+  upload:
+    needs: [ release]
+    strategy:
+      matrix:
+        include:
+          - name: asn.mmdb
+          - name: asn.json.gz
+          - name: asn.csv.gz
+          - name: country.mmdb
+          - name: country.json.gz
+          - name: country.csv.gz
+          - name: country_asn.mmdb
+          - name: country_asn.json.gz
+          - name: country_asn.csv.gz
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: 发布文件
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ needs.release.steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ matrix.name }}
+          asset_name: ${{ matrix.name }}
+          asset_content_type: application/octet-stream
