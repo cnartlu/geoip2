@@ -3,7 +3,10 @@
 
 name: 下载更新发版
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3,11,19 * * *"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,19 +30,18 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
-      tag_name: ${{ steps.datetime.outputs.time }}
+      tag_name: ${{ steps.create_tag.outputs.tag_name }}
     steps:
       - uses: actions/checkout@master
-      - name: 获取系统日期
-        id: datetime
-        run: echo "time=$(date +%Y%m%d%H%M%S)" > $GITHUB_OUTPUT
+      - name: 获取tag名称
+        id: create_tag
+        run: echo "tag_name=V$(date +%Y%m%d%H)" > $GITHUB_OUTPUT
       - uses: actions/checkout@master
         id: git_checkout          
       - name: 发布版本
         run: |
-          ls -la
-          git tag ${{ steps.datetime.outputs.time }}
-          git push origin ${{ steps.datetime.outputs.time }}
+          git tag ${{ steps.create_tag.outputs.tag_name }}
+          git push origin ${{ steps.create_tag.outputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Create Release
@@ -48,14 +50,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.datetime.outputs.time }}
-          release_name: Release ${{ steps.datetime.outputs.time }}
+          tag_name: ${{ steps.create_tag.outputs.tag_name }}
+          release_name: Release ${{ steps.create_tag.outputs.tag_name }}
           draft: false
           prerelease: false
-      - name: 移除版本
-        run: git push --delete origin ${{ steps.datetime.outputs.time }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
 
   upload:
     needs: [build, release]
