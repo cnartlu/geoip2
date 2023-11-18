@@ -20,20 +20,6 @@ jobs:
       - name: 发布版本
         run: |
           ls -la
-          mv asn.mmdb?token=7617e71ea49806 asn.mmdb
-          mv asn.json.gz?token=7617e71ea49806 asn.json.gz
-          mv asn.csv.gz?token=7617e71ea49806 asn.csv.gz
-          mv country.mmdb?token=7617e71ea49806 country.mmdb
-          mv country.json.gz?token=7617e71ea49806 country.json.gz
-          mv country.csv.gz?token=7617e71ea49806 country.csv.gz
-          mv country_asn.mmdb?token=7617e71ea49806 country_asn.mmdb
-          mv country_asn.json.gz?token=7617e71ea49806 country_asn.json.gz
-          mv country_asn.csv.gz?token=7617e71ea49806 country_asn.csv.gz
-          git config --global user.email "preferhu@qq.com"
-          git config --global user.name "cnartlu"
-          git add .
-          git commit -m "提交更新文件${{ matrix.name }}"
-          git push
           git tag ${{ steps.datetime.outputs.time }}
           git push origin ${{ steps.datetime.outputs.time }}
         env:
