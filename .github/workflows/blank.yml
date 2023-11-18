@@ -6,28 +6,18 @@ name: 下载geoip数据
 on: workflow_dispatch
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-          - name: asn.mmdb
-          - name: asn.json.gz
-          - name: asn.csv.gz
-          - name: country.mmdb
-          - name: country.json.gz
-          - name: country.csv.gz
-          - name: country_asn.mmdb
-          - name: country_asn.json.gz
-          - name: country_asn.csv.gz
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - name: 下载文件
-        run: wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -o ./${{ matrix.name }}
+        run: |
+          arr=( asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz )
+          for v in ${arr[*]}; do wget https://ipinfo.io/data/free/${v}?token=${{ secrets.IPINFO_TOKEN }} -o ./${v}; done
       - name: 提交geoIP文件${{ matrix.name }}
         run: |
           git config --global user.email "preferhu@qq.com"
           git config --global user.name "cnartlu"
-          git add ./${{ matrix.name }}
+          git add .
           git commit -m "提交更新文件${{ matrix.name }}"
           git push
         env:
