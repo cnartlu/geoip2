@@ -53,15 +53,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: ipinfo/asn.mmdb
-          - name: ipinfo/asn.json.gz
-          - name: ipinfo/asn.csv.gz
-          - name: ipinfo/country.mmdb
-          - name: ipinfo/country.json.gz
-          - name: ipinfo/country.csv.gz
-          - name: ipinfo/country_asn.mmdb
-          - name: ipinfo/country_asn.json.gz
-          - name: ipinfo/country_asn.csv.gz
+          - name: asn.mmdb
+          - name: asn.json.gz
+          - name: asn.csv.gz
+          - name: country.mmdb
+          - name: country.json.gz
+          - name: country.csv.gz
+          - name: country_asn.mmdb
+          - name: country_asn.json.gz
+          - name: country_asn.csv.gz
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
