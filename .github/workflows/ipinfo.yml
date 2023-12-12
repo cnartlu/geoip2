@@ -46,6 +46,7 @@ jobs:
           release_name: Release ${{ steps.release_name.outputs.name }}
           draft: false
           prerelease: false
+          body: ${{ steps.check_file.outputs.body }}
 
   upload:
     needs: [release]
