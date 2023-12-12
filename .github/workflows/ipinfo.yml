@@ -30,15 +30,19 @@ jobs:
       - name: Release Name Building
         id: release_name
         run: echo "name=V$(date +%Y%m%d%H)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@master
-        id: git_checkout
+      - name: Create Tag
+        run: |
+          git tag ${{ steps.release_name.outputs.name }}
+          git push origin ${{ steps.release_name.outputs.name }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.0.1-beta
+          tag_name: ${{ steps.release_name.outputs.name }}
           release_name: Release ${{ steps.release_name.outputs.name }}
           draft: false
           prerelease: false
