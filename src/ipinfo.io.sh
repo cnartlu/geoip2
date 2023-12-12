@@ -31,10 +31,3 @@ if [ ${#dlnames[*]} -lt 1 ]; then
     return 0
 fi
 echo "$newbody"
-mkdir -p ./ipinfo
-for name in ${names[*]}; do
-    # wget https://ipinfo.io/data/free/${name}?token=${IPINFP_TOKEN} -O ./ipinfo/${name}
-    touch ./ipinfo/${name}
-    echo "1" >./ipinfo/${name}
-done
-zip -r ipinfo.io.zip ./ipinfo
