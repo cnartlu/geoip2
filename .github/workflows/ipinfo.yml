@@ -1,0 +1,84 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: download ipinfo.io geoip database
+
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron: "30 2 * * *"
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      success: ${{ steps.download_file.outputs.success }}
+      body: "${{ steps.download_file.outputs.body }}"
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_name: ${{ steps.release_name.outputs.name }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Download ipinfo geoip2 database
+        id: download_file
+        run: |
+          body=$(/bin/bash -e ./src/ipinfo.io.sh ${{ secrets.IPINFO_TOKEN }})
+          if [ -z "$body" ]; then
+            echo "success=false" > "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "success=true" >> "$GITHUB_OUTPUT"
+          echo "body=\"$newbody\"" >> "$GITHUB_OUTPUT"
+      - name: Release Name Building
+        id: release_name
+        run: echo "name=V$(date +%Y%m%d%H)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@master
+        id: git_checkout
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v0.0.1 beta
+          release_name: Release ${{ steps.release_name.outputs.name }}
+          draft: false
+          prerelease: false
+
+  upload:
+    needs: [release]
+    if: ${{ needs.release.outputs.success }} == true
+    strategy:
+      matrix:
+        include:
+          - name: ipinfo/asn.mmdb
+          - name: ipinfo/asn.json.gz
+          - name: ipinfo/asn.csv.gz
+          - name: ipinfo/country.mmdb
+          - name: ipinfo/country.json.gz
+          - name: ipinfo/country.csv.gz
+          - name: ipinfo/country_asn.mmdb
+          - name: ipinfo/country_asn.json.gz
+          - name: ipinfo/country_asn.csv.gz
+          - name: ipinfo.io.zip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Init File Info
+        id: file_info
+        run: |
+          filename=$(basename "${{ matrix.name }}")
+          echo "filename=$filename" >> "$GITHUB_OUTPUT"
+          filemime=$(file -i "${{ matrix.name }}" | cut -d ' ' -f 2)
+          if [ -z "$filemime" ]; then
+            filemime="application/octet-stream"
+          fi
+          filemime=${filemime/;/}
+          echo "filemime=$filemime" >> "$GITHUB_OUTPUT"
+      - name: Upload Release ${{ matrix.name }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./${{ matrix.name }}
+          asset_name: ${{ steps.file_info.outputs.filename }}
+          asset_content_type: ${{ steps.file_info.outputs.filemime }}
