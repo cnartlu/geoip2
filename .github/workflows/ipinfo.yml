@@ -81,8 +81,7 @@ jobs:
         id: download_file
         run: |
           mkdir -p ./ipinfo
-          touch ./ipinfo/${{ matrix.name }}
-          # wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -O ./ipinfo/${{ matrix.name }}
+          wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -O ./ipinfo/${{ matrix.name }}
       - name: Init File Info
         id: file_info
         run: |
