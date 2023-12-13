@@ -26,6 +26,9 @@ jobs:
       - name: Check ipinfo geoip2 database
         id: check_file
         run: |
+          ls -la
+          echo "列出 ./checksums 目录"
+          ls -la ./checksums
           body=$(/bin/bash -e ./src/ipinfo.io.sh ${{ secrets.IPINFO_TOKEN }})
           echo "${body}" >> "$GITHUB_OUTPUT"
       - name: Release Name Building
@@ -60,7 +63,7 @@ jobs:
           key: ${{ steps.restore_checksums.outputs.cache-primary-key }}
   upload:
     needs: [release]
-    if: ${{ needs.release.outputs.success }} == true
+    if: ${{ needs.release.outputs.success }} == true && false
     strategy:
       matrix:
         include:
@@ -79,7 +82,8 @@ jobs:
         id: download_file
         run: |
           mkdir -p ./ipinfo
-          wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -O ./ipinfo/${{ matrix.name }}
+          touch ./ipinfo/${{ matrix.name }}
+          # wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -O ./ipinfo/${{ matrix.name }}
       - name: Init File Info
         id: file_info
         run: |
