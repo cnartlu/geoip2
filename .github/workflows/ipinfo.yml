@@ -27,6 +27,7 @@ jobs:
         id: check_file
         run: |
           echo "列出 ./checksums 目录"
+          mkdir -p ./checksums
           ls -la ./checksums
           body=$(/bin/bash -e ./src/ipinfo.io.sh ${{ secrets.IPINFO_TOKEN }})
           echo "${body}" >> "$GITHUB_OUTPUT"
