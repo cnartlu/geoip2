@@ -31,20 +31,18 @@ jobs:
           body=$(/bin/bash -e ./src/ipinfo.io.sh ${{ secrets.IPINFO_TOKEN }})
           echo "${body}" >> "$GITHUB_OUTPUT"
       - name: Release Name Building
-        if: ${{ steps.check_file.outputs.success }} == true
+        if: steps.check_file.outputs.success
         id: release_name
-        run: |
-          echo "是否执行下部分操作 ${{ steps.check_file.outputs.success }}"
-          echo "name=V$(date +%Y%m%d%H)" >> "$GITHUB_OUTPUT"
+        run: echo "name=V$(date +%Y%m%d%H)" >> "$GITHUB_OUTPUT"
       - name: Create Tag
-        if: ${{ steps.check_file.outputs.success }} == true
+        if: steps.check_file.outputs.success
         run: |
           git tag ${{ steps.release_name.outputs.name }}
           git push origin ${{ steps.release_name.outputs.name }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Create Release
-        if: ${{ steps.check_file.outputs.success }} == true
+        if: steps.check_file.outputs.success
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -56,7 +54,7 @@ jobs:
           prerelease: false
           body: ${{ steps.check_file.outputs.body }}
       - name: Store Cache Checksums
-        if: ${{ steps.check_file.outputs.success }} == true
+        if: steps.check_file.outputs.success
         id: store_checksums
         uses: actions/cache/save@v3
         with:
@@ -64,7 +62,7 @@ jobs:
           key: ${{ steps.restore_checksums.outputs.cache-primary-key }}
   upload:
     needs: [release]
-    if: ${{ needs.release.outputs.success }} == true
+    if: needs.release.outputs.success
     strategy:
       matrix:
         include:
