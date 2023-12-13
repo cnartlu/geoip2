@@ -1,33 +1,51 @@
 #!/bin/bash
 IPINFP_TOKEN=$1
 
-names=(asn.mmdb asn.json.gz asn.csv.gz country.mmdb country.json.gz country.csv.gz country_asn.mmdb country_asn.json.gz country_asn.csv.gz)
+names=(
+    asn.mmdb
+    asn.json.gz
+    asn.csv.gz
+    country.mmdb
+    country.json.gz
+    country.csv.gz
+    country_asn.mmdb
+    country_asn.json.gz
+    country_asn.csv.gz
+)
 
-body=$(curl "https://api.github.com/repos/cnartlu/geoip2/releases/latest" | grep '"body"' | cut -d '"' -f 4)
-
-newbody="ipinfo文件对应的hash"
-
+mkdir -p ./checksums
 dlnames=()
 dlidx=0
 for name in ${names[*]}; do
+    checkfile="./checksums/${name}.json"
+    oldmd5=
+    oldsha1=
+    oldsha256=
+    if [ -f "$checkfile" ]; then
+        oldchecksums=$(cat $checkfile)
+        oldmd5=$(echo "$oldchecksums" | grep "md5" | cut -d '"' -f 4)
+        # oldsha1=$(echo "$oldchecksums" | grep "sha1" | cut -d '"' -f 4)
+        # oldsha256=$(echo "$oldchecksums" | grep "sha256" | cut -d '"' -f 4)
+    fi
+
     checksums=$(curl "https://ipinfo.io/data/free/${name}/checksums?token=${IPINFP_TOKEN}")
     md5=$(echo "$checksums" | grep "md5" | cut -d '"' -f 4)
-    sha1=$(echo "$checksums" | grep "sha1" | cut -d '"' -f 4)
-    sha256=$(echo "$checksums" | grep "sha256" | cut -d '"' -f 4)
-    newbody="${newbody}
-name:${name} md5:${md5} sha1:${sha1} sha256:${sha256}"
-    if [ -z "$md5" ]; then
+
+    if [ -z "$md5" ] || [ "$oldmd5" == "$md5" ]; then
+        echo "the md5 hash value of ${name} is empty or equal to the original hash value ${oldmd5}" 1>&2
         continue
     fi
-    checkmd5=$(echo "$body" | grep "name:$name" | cut -d " " -f 2 | cut -d ":" -f 2)
-    if [ "$checkmd5" == "$md5" ]; then
-        echo "${name} hash equal ${md5}" &>2
-        continue
-    fi
+
+    # sha1=$(echo "$checksums" | grep "sha1" | cut -d '"' -f 4)
+    # sha256=$(echo "$checksums" | grep "sha256" | cut -d '"' -f 4)
+
+    echo "$checksums" >$checkfile
     dlnames[$dlidx]="$name"
+    dlidx=$((${dlidx} + 1))
 done
 
-if [ ${#dlnames[*]} -lt 1 ]; then
-    return 0
+success=true
+if [ ${#dlnames[*]} -eq 0 ]; then
+    success=false
 fi
-echo "$newbody"
+echo "success=${success}"

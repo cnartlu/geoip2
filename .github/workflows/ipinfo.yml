@@ -12,31 +12,35 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       success: ${{ steps.check_file.outputs.success }}
-      body: "${{ steps.check_file.outputs.body }}"
+      body: 
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       release_name: ${{ steps.release_name.outputs.name }}
     steps:
       - uses: actions/checkout@master
+      - name: Restore Cache Checksums
+        id: restore_checksums
+        uses: actions/cache/restore@v3
+        with:
+          path: ./checksums
+          key: ${{ runner.os }}-checksums
       - name: Check ipinfo geoip2 database
         id: check_file
         run: |
           body=$(/bin/bash -e ./src/ipinfo.io.sh ${{ secrets.IPINFO_TOKEN }})
-          if [ -z "$body" ]; then
-            echo "success=false" > "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "success=true" >> "$GITHUB_OUTPUT"
-          echo "body=\"$body\"" >> "$GITHUB_OUTPUT"
+          echo "${body}" >> "$GITHUB_OUTPUT"
       - name: Release Name Building
+        if: ${{ steps.check_file.outputs.success }} == true
         id: release_name
         run: echo "name=V$(date +%Y%m%d%H)" >> "$GITHUB_OUTPUT"
       - name: Create Tag
+        if: ${{ steps.check_file.outputs.success }} == true
         run: |
           git tag ${{ steps.release_name.outputs.name }}
           git push origin ${{ steps.release_name.outputs.name }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Create Release
+        if: ${{ steps.check_file.outputs.success }} == true
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -47,7 +51,13 @@ jobs:
           draft: false
           prerelease: false
           body: ${{ steps.check_file.outputs.body }}
-
+      - name: Store Cache Checksums
+        if: ${{ steps.check_file.outputs.success }} == true
+        id: store_checksums
+        uses: actions/cache/save@v3
+        with:
+          path: ./checksums
+          key: ${{ steps.restore_checksums.outputs.cache-primary-key }}
   upload:
     needs: [release]
     if: ${{ needs.release.outputs.success }} == true
