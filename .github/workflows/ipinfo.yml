@@ -1,0 +1,105 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: download ipinfo.io geoip database
+
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron: "30 * * * *"
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      success: ${{ steps.check_file.outputs.success }}
+      body: 
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_name: ${{ steps.release_name.outputs.name }}
+    steps:
+      - uses: actions/checkout@master
+      - name: Restore Cache Checksums
+        id: restore_checksums
+        uses: actions/cache/restore@v3
+        with:
+          path: ./checksums
+          key: ${{ runner.os }}-checksums
+      - name: Check ipinfo geoip2 database
+        id: check_file
+        run: |
+          echo "列出 ./checksums 目录"
+          mkdir -p ./checksums
+          ls -la ./checksums
+          body=$(/bin/bash -e ./src/ipinfo.io.sh ${{ secrets.IPINFO_TOKEN }})
+          echo "${body}" >> "$GITHUB_OUTPUT"
+      - name: Release Name Building
+        if: steps.check_file.outputs.success == 'true'
+        id: release_name
+        run: echo "name=V$(date +%Y%m%d%H)" >> "$GITHUB_OUTPUT"
+      - name: Create Tag
+        if: steps.check_file.outputs.success == 'true'
+        run: |
+          git tag ${{ steps.release_name.outputs.name }}
+          git push origin ${{ steps.release_name.outputs.name }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Create Release
+        if: steps.check_file.outputs.success == 'true'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_name.outputs.name }}
+          release_name: Release ${{ steps.release_name.outputs.name }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.check_file.outputs.body }}
+      - name: Store Cache Checksums
+        if: steps.check_file.outputs.success == 'true'
+        id: store_checksums
+        uses: actions/cache/save@v3
+        with:
+          path: ./checksums
+          key: ${{ steps.restore_checksums.outputs.cache-primary-key }}
+  upload:
+    needs: [release]
+    if: needs.release.outputs.success == 'true'
+    strategy:
+      matrix:
+        include:
+          - name: asn.mmdb
+          - name: asn.json.gz
+          - name: asn.csv.gz
+          - name: country.mmdb
+          - name: country.json.gz
+          - name: country.csv.gz
+          - name: country_asn.mmdb
+          - name: country_asn.json.gz
+          - name: country_asn.csv.gz
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download geoip2 ${{ matrix.name }} database
+        id: download_file
+        run: |
+          mkdir -p ./ipinfo
+          wget https://ipinfo.io/data/free/${{ matrix.name }}?token=${{ secrets.IPINFO_TOKEN }} -O ./ipinfo/${{ matrix.name }}
+      - name: Init File Info
+        id: file_info
+        run: |
+          filename=$(basename "${{ matrix.name }}")
+          echo "filename=$filename" >> "$GITHUB_OUTPUT"
+          filemime=$(file -i "${{ matrix.name }}" | cut -d ' ' -f 2)
+          if [ -z "$filemime" ]; then
+            filemime="application/octet-stream"
+          fi
+          filemime=${filemime/;/}
+          echo "filemime=$filemime" >> "$GITHUB_OUTPUT"
+      - name: Upload Release ${{ matrix.name }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./ipinfo/${{ matrix.name }}
+          asset_name: ${{ steps.file_info.outputs.filename }}
+          asset_content_type: ${{ steps.file_info.outputs.filemime }}
