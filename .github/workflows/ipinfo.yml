@@ -6,7 +6,7 @@ name: download ipinfo.io geoip database
 on: 
   workflow_dispatch:
   schedule:
-    - cron: "30 3,11,19 * * *"
+    - cron: "30 22 * * *"
 jobs:
   release:
     runs-on: ubuntu-latest
